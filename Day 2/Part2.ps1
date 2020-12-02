@@ -20,7 +20,7 @@ foreach($entry in $inputData){
     # get password from inital split
     $password = $entrySplit[1]
 
-    # evaluate if value in correct place
+    # evaluate if value in correct place, use xor as the requirements state "EXACTLY one place contains the keyword"
     if(($password[$places[0] -1] -eq $keyword) -xor ($password[$places[1] -1] -eq $keyword)){
         $validPasswords++
     }

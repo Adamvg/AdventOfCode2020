@@ -21,8 +21,8 @@ foreach($entry in $inputData){
     $password = $entrySplit[1]
 
     # evaluate if value in correct place
-    if(($password[$places[0] -1] -eq $keyword) -and ($password[$places[1] -1] -eq $keyword)){
-            $validPasswords++
+    if(($password[$places[0] -1] -eq $keyword) -xor ($password[$places[1] -1] -eq $keyword)){
+        $validPasswords++
     }
     else{
         $invalidPasswords++

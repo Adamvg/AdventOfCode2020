@@ -6,11 +6,13 @@ $trees = $null
 $openSpaces = $null
 
 # set positions
-$posX = 3 # car starts on position 3 of line 1
-$posXMoved = 3 # distance moved on X per line
+$posX = 3 # starting X position
+$posXMoved = 3 # distance moved on X each time
+$posY = 1 # starting Y position
+$posYMoved = 1 # distance moved on Y each time
 
 # we are checking the posX of current line
-For($i=1;$i -lt $inputData.Count;$i++){
+For($i=$posY; $i -lt $inputData.Count; $i=$i+$posYMoved){
     # get current line
     $line = $inputData[$i]
 

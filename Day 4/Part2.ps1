@@ -14,7 +14,7 @@ $minHgtIn = 59
 $maxHgtIn = 76
 $hclMatch = '#[0-9a-f]{6}'
 $validEyeColours = @('amb','blu','brn','gry','grn','hzl','oth')
-$pidMatch = '[0-9]{9}'
+$pidMatch = '\b[0-9]{9}\b' # need word boundaries to match EXACTLY 9 digits
 
 # split by empty line to get individual records into an array
 $passports = $inputData -split '  '

@@ -27,7 +27,7 @@ Foreach($passport in $passports){
     # split data
     $data = $passport -split ' '
     $tempHashTable = @{}
-    $data | Foreach{
+    $data | ForEach-Object{
         $tempData = $_ -split ':'
         $tempHashTable.add($tempData[0],$tempData[1])
     }

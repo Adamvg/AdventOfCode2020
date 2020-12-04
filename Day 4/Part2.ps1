@@ -2,8 +2,19 @@
 $inputData = Get-Content .\Input.txt
 
 # variables
+$minByr = 1920
+$maxByr = 2002
+$minIyr = 2010
+$maxIyr = 2020
+$minEyr = 2020
+$maxEyr = 2030
+$minHgtCm = 150
+$maxHgtCm = 193
+$minHgtIn = 59
+$maxHgtIn = 59
+$hclMatch = '#[0-9a-f]{6}'
 $validEyeColours = @('amb','blu','brn','gry','grn','hzl','oth')
-
+$pidMatch = '[0-9]{9}'
 
 # split by empty line to get individual records into an array
 $passports = $inputData -split '  '
@@ -33,22 +44,21 @@ Foreach($passport in $passports){
     $tempOutput.CountryID = $tempHashTable.cid
 
     # validate height
-    if(!($tempOutput.Height)){$validHeight = $false}
+    if($tempOutput.Height){$validHeight = $false}
     elseif($tempOutput.Height.EndsWith('cm')){
         [int]$height = $tempOutput.Height -replace 'cm'
-        if($height -ge 150 -and $height -le 193){$validHeight = $true}
+        if($height -ge $minHgtCm -and $height -le $maxHgtCm){$validHeight = $true}
         else{$validHeight = $false}
     }
     elseif($tempOutput.Height.EndsWith('in')){
         [int]$height = $tempOutput.Height -replace 'in'
-        if($height -ge 59 -and $height -le 76){$validHeight = $true}
+        if($height -ge $minHgtIn -and $height -le $maxHgtIn){$validHeight = $true}
         else{$validHeight = $false}
     }
-    else{
-        $validHeight = $false
-    }
+    else{$validHeight = $false} # i dont think this will do anything but idfk
 
-    if (($tempOutput.BirthYear -ge 1920 -and $tempOutput.BirthYear -le 2002) -and ($tempOutput.IssueYear -ge 2010 -and $tempOutput.IssueYear -le 2020) -and ($tempOutput.ExpirationYear -ge 2020 -and $tempOutput.ExpirationYear -le 2030) -and ($validHeight -eq $true) -and ($tempOutput.HairColour -match '#[0-9a-f]{6}') -and ($validEyeColours -contains $tempOutput.EyeColour) -and ($tempOutput.PassportID -match '[0-9]{9}')){
+    # validate everything else
+    if (($tempOutput.BirthYear -ge $minByr -and $tempOutput.BirthYear -le $maxByr) -and ($tempOutput.IssueYear -ge $minIyr -and $tempOutput.IssueYear -le $maxIyr) -and ($tempOutput.ExpirationYear -ge $minEyr -and $tempOutput.ExpirationYear -le $maxEyr) -and ($validHeight -eq $true) -and ($tempOutput.HairColour -match $hclMatch) -and ($validEyeColours -contains $tempOutput.EyeColour) -and ($tempOutput.PassportID -match $pidMatch)){
         $valid = $true
     }
     else {

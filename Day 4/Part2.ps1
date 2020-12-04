@@ -11,7 +11,7 @@ $maxEyr = 2030
 $minHgtCm = 150
 $maxHgtCm = 193
 $minHgtIn = 59
-$maxHgtIn = 59
+$maxHgtIn = 76
 $hclMatch = '#[0-9a-f]{6}'
 $validEyeColours = @('amb','blu','brn','gry','grn','hzl','oth')
 $pidMatch = '[0-9]{9}'
@@ -44,7 +44,7 @@ Foreach($passport in $passports){
     $tempOutput.CountryID = $tempHashTable.cid
 
     # validate height
-    if($tempOutput.Height){$validHeight = $false}
+    if(!($tempOutput.Height)){$validHeight = $false}
     elseif($tempOutput.Height.EndsWith('cm')){
         [int]$height = $tempOutput.Height -replace 'cm'
         if($height -ge $minHgtCm -and $height -le $maxHgtCm){$validHeight = $true}

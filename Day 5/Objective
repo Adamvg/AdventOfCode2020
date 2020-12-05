@@ -1,0 +1,7 @@
+Binary space partitioning
+0-127 rows (128 rows) (F/B)
+0-7 columns (8 columns) L/R
+F/L: lower half
+B/R: upper half
+
+FBFBBFFRLR = row 44, column 5

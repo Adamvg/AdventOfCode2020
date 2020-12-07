@@ -1,0 +1,3 @@
+Calculate unique questions (letters) answered per groups
+
+In this example, the sum of these counts is 3 + 3 + 3 + 1 + 1 = 11.

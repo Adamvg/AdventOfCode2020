@@ -12,7 +12,8 @@ Function Test-BagContents{
                 break
             }
             else{
-                Test-BagContents -bagColour $bag
+                $a = Test-BagContents -bagColour $bag
+                if($a -eq $true){return}
             }
         }
         if($contains){return $true}

@@ -1,5 +1,27 @@
+Function Test-BagContents{
+    Param(
+        [string]$testColour = 'shinygold',
+        [string]$bagColour
+    )
+    Process{
+        $bagContents = ($bags | Where-Object {$_.bagColour -eq $bagColour}) | Select-Object -ExpandProperty bagContents
+        if($null -eq $bagContents){return}
+        Foreach($bag in $bagContents){
+            if($bag -eq $testColour){
+                $contains = $true
+                break
+            }
+            else{
+                Test-BagContents -bagColour $bag
+            }
+        }
+        if($contains){return $true}
+        else{return $false}
+    }
+}
+
 # get input data as array
-[array]$inputData = Get-Content .\ExampleInput.txt
+[array]$inputData = Get-Content .\Input.txt
 
 # set variables
 $bags = @()
@@ -28,22 +50,17 @@ foreach($rule in $inputData){
     $bags += $bagsTemp
 }
 
-# get bags which directly contain shinygold
-$bagsDirectlyContainingShinyGold = $bags | Where-Object {$_.bagContents -contains 'shinygold'}
-$bagsIndirectlyContainingShinyGold = @()
-
+$containingBags = @()
 foreach($bag in ($bags | Where-Object {$_.bagContents})){
-    $compare = Compare-Object $bagsDirectlyContainingShinyGold.bagColour -DifferenceObject $bag.bagContents -IncludeEqual
-    if($compare.SideIndicator -contains '=='){
-        $bagsIndirectlyContainingShinyGold += $bag
+    foreach($childBag in $bag.bagContents){
+        if(Test-BagContents -bagColour $childBag){$containingBags += $childBag}
     }
 }
 
-# combine into one array
-$bagsContainingShinyGold = $bagsDirectlyContainingShinyGold + $bagsIndirectlyContainingShinyGold
+$containingBags = $containingBags | Select-Object -Unique | Where-Object {$_ -ne 'shinygold'}
 
 # return answer
-"$($bagsContainingShinyGold.Count) bags contain Shiny Gold"
+"$($containingBags.Count) bags contain Shiny Gold"
 
 ########### fucked shit
 

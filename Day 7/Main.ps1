@@ -1,179 +1,93 @@
-Function Test-BagContents{
-    Param(
-        [string]$testColour = 'shinygold',
-        [string]$bagColour
+#import the bag rules
+$inputData = get-content -path .\Input.txt
+
+#Bag To Search For
+$searchForBag = 'shiny gold'
+
+#create and populate the hash table with the input rules
+$bagTable = @{}
+$subBagTable = @{}
+
+foreach ($rule in $inputData) {
+    $containsTable = @{}
+    $rule = $rule -split " bags contain "
+    $key = $rule[0]
+    $containsRules = ($rule[1] -split ", ").replace(".", "")
+    foreach ($cr in $containsRules) {
+        $cr = $cr.replace(" bags", "")
+        $cr = $cr.replace(" bag", "")
+        $amount = $cr.substring(0, $cr.indexOf(" "))
+
+        if ($amount -ne "no") {            
+            $bagName = $cr.substring($cr.indexOf(" ") + 1)
+            $containsTable.Add($bagName, $amount)
+        }       
+    }
+
+    $bagTable.Add($key, $containsTable)
+}
+
+#check-bag
+#Takes in the name of the bag to check and the name of the bag you are looking for
+#Returns $true if the bag you are looking for is contained in the bag being checked
+function check-bag {
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [string]$bagToCheck,
+        [string]$lookingForBag
     )
-    Process{
-        $bagContents = ($bags | Where-Object {$_.bagColour -eq $bagColour}) | Select-Object -ExpandProperty bagContents
-        if($null -eq $bagContents){return}
-        Foreach($bag in $bagContents){
-            if($bag -eq $testColour){
-                $contains = $true
+    $bagFound = $false
+    if ($bagTable.$bagToCheck.keys -contains $lookingForBag) {
+        $bagFound = $true
+    }
+    else {
+        foreach ($bag in $bagTable.$bagToCheck.keys) {
+            if (check-bag -bagToCheck $bag -lookingForBag $lookingForBag) {
+                $bagFound = $true
                 break
             }
-            else{
-                $a = Test-BagContents -bagColour $bag
-                if($a -eq $true){return}
-            }
         }
-        if($contains){return $true}
-        else{return $false}
+    }
+    return $bagFound
+}
+
+#count-subBags
+#Takes in the name of a bag and
+#Returns the count of bags contained within the bag
+function Count-SubBags {
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [string]$lookingForBag
+    )
+    $subBags = $bagTable.$lookingForBag
+    $thisSubCount = 0
+
+    foreach ($sub in $subBags.getEnumerator()) {
+        $subCount = count-subBags -lookingForBag $sub.Name
+        if ($subCount -eq 0) {
+            $thisSubCount += [int]$sub.Value
+        }
+        else {
+            $thisSubCount += ([int]$subCount * $sub.Value) + $sub.Value
+        }
+    }
+    return [int]$thisSubCount
+}
+
+
+# part1
+#Loop through each bag and check if $searchForBag is contained within them
+$bagsContaining = 0
+foreach ($bag in $bagTable.getEnumerator()) {
+    if (check-bag -bagToCheck $bag.Name -lookingForBag $searchForBag) {
+        $bagsContaining++
     }
 }
 
-# get input data as array
-[array]$inputData = Get-Content .\Input.txt
+Write-Host "Total Bags Containing $searchForBag`: $bagsContaining"
 
-# set variables
-$bags = @()
-
-# iterate through array to create bags array
-foreach($rule in $inputData){
-    # get bag colour
-    $bagColour = $rule -replace ' bags.*' -replace ' '
-
-    # only add if doesnt already exist
-    if($bags | Where-Object {$_.bagColour -eq $bagColour}){break}
-
-    # get bag contents
-    if($rule -match 'no other bags'){
-        $bagContents = $null
-    }
-    else{
-        $bagContents = $rule -replace '.* contain' -replace '[0-9]' -replace 'bags?' -replace ' ' -replace '\.' -split ','
-    }
-
-    # create temp table to add to overall array
-    $bagsTemp = '' | Select-Object bagColour,bagContents
-    $bagsTemp.bagColour = $bagColour
-    $bagsTemp.bagContents = $bagContents
-
-    $bags += $bagsTemp
-}
-
-$containingBags = @()
-foreach($bag in ($bags | Where-Object {$_.bagContents})){
-    foreach($childBag in $bag.bagContents){
-        if(Test-BagContents -bagColour $childBag){$containingBags += $childBag}
-    }
-}
-
-$containingBags = $containingBags | Select-Object -Unique | Where-Object {$_ -ne 'shinygold'}
-
-# return answer
-"$($containingBags.Count) bags contain Shiny Gold"
-
-########### fucked shit
-
-# get empty bags into an array
-#$emptyBags = $bags | Where-Object {$_.bagContents -eq $null} | Select-Object -ExpandProperty bagColour
-
-# # remove empty bags from list
-# $bags = $bags | Where-Object {$_.bagContents -ne $null}
-
-# # iterate through bags array to remove empty bags
-# for($i=0; $i -lt $bags.Count; $i++){
-#     # get bag contents
-#     $bagContents = $bags[$i].bagContents
-
-#     # get bag colour
-#     $bagColour = $bags[$i].bagColour
-
-#     # remove empty bags
-#     foreach($bagContent in $bagContents){
-#         $bagContentColour = $bagContent -replace '[0-9]'
-#         $tempArray = @()
-
-#         if($emptyBags -contains $bagContentColour){
-#             $bagContentTemp = $bagContent | Where-Object {$_ -match $bagContentColour}
-#             $tempArray += $bagContentTemp
-#         }
-#         ($bags | Where-Object {$_.bagColour = $bagContentColour}).bagContents = $tempArray
-#     }
-# }
-
-# ### everything below this is a fucking disaster and i dont know what im doing
-
-# foreach($bag in ($bags | Where-Object {$_.bagColour -notmatch 'shinygold'})){
-#     foreach($bagContent in ($bag.bagContents | Where-Object {$_ -notmatch 'shinygold'})){
-#         [string]$bagContentColour = $bagContent -replace '[0-9]*'
-#         [int]$bagContentCount = $bagContent -replace '[a-z]*'
-
-#         $otherBag = $bags | Where-Object {$_.bagColour = $bagContentColour}
-#         if($otherBag){
-#             $tempArray = @()
-#             foreach($otherBagContent in $otherBag.bagContent){
-#                 [string]$otherBagContentColour = $otherBagContent -replace '[0-9]*'
-#                 [int]$otherBagContentCount = $otherBagContent -replace '[a-z]*'
-
-#                 $otherBagContentCount = $otherBagContentCount * $bagContentCount
-#                 [string]$otherBagContentNew = "$($otherBagContentCount)$($otherBagContentColour)"
-#                 $tempArray += $otherBagContentNew
-#             }
-#             ($bags | Where-Object {$_.bagColour = $bagContentColour}).bagContents = $tempArray
-#         }
-#     }
-# }
-
-# foreach($bag in $bags){
-#     # ignore shinygold
-#     if($bag.bagColour -ne 'shinygold'){
-#         # go through each bag content
-#         foreach($bagContent in $bag.bagContents){
-#             $bagContentColour = $bagContent -replace '[0-9]*'
-#             $bagContentCount = $bagContent -replace '[a-z]*'
-#             if(($bags.bagColour -contains $bagContentColour) -and ($bags.bagColour -ne 'shinygold')){
-#                 # simplify
-#                 $otherBags = $bags | Where-Object {$_.bagColour -eq $bagContentColour}
-
-#                 if($otherBags){
-#                     $newBagContents = @()
-#                     foreach($otherBag in $otherBags){
-#                         $otherBagContents = $otherBag.bagContents
-#                         Foreach($otherBagContent in $otherBagContents){
-#                             $otherBagContentColour = $otherBagContent -replace '[0-9]*'
-#                             $otherBagContentCount = $otherBagContent -replace '[a-z]*'
-
-#                             $otherBagContentCount = [int]$otherBagContentCount * [int]$bagContentCount
-#                             $otherBagContent = [string]$otherBagContentCount + $otherBagContentColour
-
-#                             # set in bags array
-#                             $newBagContents += $otherBagContent
-#                         }
-#                     }
-#                     ($bags | Where-Object {$_.bagColour -eq $bagContentColour}).bagContents = $newBagContents
-#                 }
-#             }
-#         }
-#     }
-# }
-
-# # iterate through to simplify bags
-# for($i=0; $i -lt $bags.Count; $i++){
-#     # get bag contents
-#     $bagContents = $bags[$i].bagContents
-
-#     foreach($bagContent in $bagContents){
-#         # don't simplify anything with shinygold
-#         $match = $bagContent -match 'shinygold'
-#         if(!($match)){
-#             $bagContentColour = $bagContent -replace '[0-9]'
-#             [int]$bagContentCount = $bagContent.subString(0,1)
-#             $otherBag = $bags | Where-Object {$_.bagColour -eq $bagContentColour}
-
-#             if($otherBag){
-#                 # deal with other bag
-#                 $otherBagContents = $otherBag.bagContents
-#                 $otherBagContentsNew = @()
-#                 foreach($otherBagContent in $otherBagContents){
-#                     [int]$otherBagContentCount = $otherBagContent.subString(0,1)
-#                     $otherBagContentColour = $otherBagContent -replace '[0-9]'
-
-#                     $outputBagContent = ($otherBagContentCount * $bagContentCount) + $otherBagContentColour
-#                     $otherBagContentsNew += $outputBagContent
-#                 }
-#                 ($bags | Where-Object {$_.bagColour -eq $otherBag.bagColour}).bagContents = $otherBagContentsNew
-#             }
-#         }
-#     }
-# }
+# part2
+#Count the sub bags of $searchForBag
+Write-Host "Total Sub Bags of $searchForBag`:" (count-subBags -lookingForBag $searchForBag)
